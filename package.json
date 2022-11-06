@@ -1,0 +1,66 @@
+{
+  "name": "estree-restore-bp",
+  "version": "1.0.0",
+  "description": "Restore deconstruction syntax that bases on estree",
+  "main": "lib/estree-restore-bp.js",
+  "unpkg": "dist/estree-restore-bp.js",
+  "module": "es/estree-restore-bp.js",
+  "types": "types/index.d.ts",
+  "files": [
+    "dist",
+    "lib",
+    "es",
+    "src",
+    "types"
+  ],
+  "keywords": [
+    "estree",
+    "deconstruction",
+    "restore deconstruction",
+    "binding pattern",
+    "array pattern",
+    "object pattern"
+  ],
+  "author": "BaoDi Zheng",
+  "license": "MIT",
+  "scripts": {
+    "test": "jest",
+    "clean": "rimraf lib dist es",
+    "coverage": "jest --coverage",
+    "tsd": "tsc --declaration true --emitDeclarationOnly true --declarationDir ./types",
+    "lint": "eslint --ext ts src test",
+    "fix:lint": "eslint  --fix ./src ./test",
+    "prepublish": "npm run clean && npm run tsd && npm run test && npm run lint && npm run fix:lint",
+    "build": "rollup -c"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:zbd-lover/estree-restore-bp.git"
+  },
+  "dependencies": {
+    "@types/estree": "^0.0.50",
+    "estree-idname-maker": "^1.0.2",
+    "typescript": "^4.8.4"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.19.3",
+    "@babel/core": "^7.19.6",
+    "@babel/eslint-parser": "^7.19.1",
+    "@babel/preset-env": "^7.19.4",
+    "@babel/preset-typescript": "^7.18.6",
+    "@rollup/plugin-babel": "^6.0.2",
+    "@rollup/plugin-commonjs": "^23.0.2",
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "@rollup/plugin-replace": "^5.0.1",
+    "@rollup/plugin-typescript": "^9.0.2",
+    "@types/jest": "^29.2.0",
+    "@typescript-eslint/eslint-plugin": "^5.42.0",
+    "acorn": "^8.8.1",
+    "babel-jest": "^29.2.2",
+    "eslint": "^8.26.0",
+    "jest": "^29.2.2",
+    "rollup": "^2.79.1",
+    "rollup-plugin-terser": "^7.0.2",
+    "ts-jest": "^29.0.3"
+  }
+}
