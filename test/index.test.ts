@@ -1,5 +1,5 @@
 import { AssignmentExpression, ExpressionStatement, VariableDeclaration } from 'estree'
-import { restore, ResultItem } from '../src'
+import { restore, RestoredItem } from '../src'
 
 import { withoutPos, parseScript, genIsUndefTest } from './helpers'
 
@@ -21,7 +21,7 @@ test('object pattern 1', () => {
   `
   const ast = parseScript(script)
   const declarataor = (ast.body[1] as VariableDeclaration).declarations[0]
-  const target: ResultItem[] = [
+  const target: RestoredItem[] = [
     {
       temporary: true,
       useOmitAPI: false,
@@ -357,7 +357,7 @@ test('object pattern 2', () => {
   `
   const ast = parseScript(script)
   const declarataor = (ast.body[1] as VariableDeclaration).declarations[0]
-  const target: ResultItem[] = [
+  const target: RestoredItem[] = [
     {
       temporary: true,
       useOmitAPI: false,
@@ -471,7 +471,7 @@ test('array pattern 1', () => {
   `
   const ast = parseScript(script)
   const declarataor = (ast.body[1] as VariableDeclaration).declarations[0]
-  const target: ResultItem[] = [
+  const target: RestoredItem[] = [
     {
       temporary: true,
       useOmitAPI: false,
@@ -742,7 +742,7 @@ test('array pattern 2', () => {
   `
   const ast = parseScript(script)
   const declarataor = (ast.body[1] as VariableDeclaration).declarations[0]
-  const target: ResultItem[] = [
+  const target: RestoredItem[] = [
     {
       temporary: true,
       useOmitAPI: false,
@@ -904,7 +904,7 @@ test('mixed pattern', () => {
   `
   const ast = parseScript(script)
   const declarataor = (ast.body[1] as VariableDeclaration).declarations[0]
-  const target: ResultItem[] = [
+  const target: RestoredItem[] = [
     {
       temporary: true,
       useOmitAPI: false,
@@ -1003,7 +1003,7 @@ test('assignment expression', () => {
   const exp1 = ast.body[1] as ExpressionStatement
   const exp2 = ast.body[2] as ExpressionStatement
 
-  const target1: ResultItem[] = [
+  const target1: RestoredItem[] = [
     {
       temporary: true,
       useOmitAPI: false,
@@ -1139,172 +1139,55 @@ test('assignment expression', () => {
   expect(withoutPos(restore(exp2.expression as AssignmentExpression))).toEqual([])
 })
 
-test('temp', () => {
-  const script = `
-  const user = {}
-  const {
-    key1,
-    key2 = 10,
-    ...rest
-  } = user || {}
-`
-  /**
-   * it is equivalent to:
-   *  const temp = user || {},
-   *    key1 = temp.key1,
-   *    $temp = temp.key2,
-   *    key2 = $temp === void 0 ? 10 : $temp
-   *    rest = omit(temp, ['key1', 'key2'])
-   */
-  const target = [
+test('custom tempVarNamegenerator', () => {
+  const script = 'const { temp } = user'
+  const ast = parseScript(script)
+  const declaration = ast.body[0] as VariableDeclaration
+  const target: RestoredItem[] = [
     {
-      temporary: true,
+      definition: {
+        id: {
+          type: 'Identifier',
+          name: 'temp0'
+        },
+        value: {
+          type: 'Identifier',
+          name: 'user'
+        }
+      },
       useOmitAPI: false,
+      temporary: true
+    },
+    {
       definition: {
         id: {
           type: 'Identifier',
           name: 'temp'
         },
         value: {
-          type: 'LogicalExpression',
-          operator: '||',
-          left: {
-            type: 'Identifier',
-            name: 'user'
-          },
-          right: {
-            type: 'ObjectExpression',
-            properties: []
-          }
-        }
-      }
-    },
-    {
-      temporary: false,
-      useOmitAPI: false,
-      definition: {
-        id: {
-          type: 'Identifier',
-          name: 'key1'
-        },
-        value: {
           type: 'MemberExpression',
           optional: false,
           computed: false,
           object: {
             type: 'Identifier',
-            name: 'temp'
+            name: 'temp0'
           },
           property: {
             type: 'Identifier',
-            name: 'key1'
-          }
-        }
-      }
-    },
-    {
-      temporary: true,
-      useOmitAPI: false,
-      definition: {
-        id: {
-          type: 'Identifier',
-          name: '$temp'
-        },
-        value: {
-          type: 'MemberExpression',
-          optional: false,
-          computed: false,
-          object: {
-            type: 'Identifier',
             name: 'temp'
-          },
-          property: {
-            type: 'Identifier',
-            name: 'key2'
           }
         }
-      }
-    },
-    {
-      temporary: false,
+      },
       useOmitAPI: false,
-      definition: {
-        id: {
-          type: 'Identifier',
-          name: 'key2'
-        },
-        value: {
-          type: 'ConditionalExpression',
-          test: {
-            type: 'BinaryExpression',
-            operator: '===',
-            left: {
-              type: 'Identifier',
-              name: '$temp'
-            },
-            right: {
-              type: 'UnaryExpression',
-              operator: 'void',
-              argument: {
-                type: 'Literal',
-                value: 0,
-                raw: '0'
-              },
-              prefix: true
-            }
-          },
-          consequent: {
-            type: 'Literal',
-            value: 10,
-            raw: '10'
-          },
-          alternate: {
-            type: 'Identifier',
-            name: '$temp'
-          }
-        }
-      }
-    },
-    {
-      temporary: false,
-      useOmitAPI: true,
-      definition: {
-        id: {
-          type: 'Identifier',
-          name: 'rest'
-        },
-        value: {
-          type: 'CallExpression',
-          optional: false,
-          callee: {
-            type: 'Identifier',
-            name: 'omit'
-          },
-          arguments: [
-            {
-              type: 'Identifier',
-              name: 'temp'
-            },
-            {
-              type: 'ArrayExpression',
-              elements: [
-                {
-                  type: 'Literal',
-                  value: 'key1',
-                  raw: '\'key1\''
-                },
-                {
-                  type: 'Literal',
-                  value: 'key2',
-                  raw: '\'key2\''
-                }
-              ]
-            },
-          ]
-        }
-      }
+      temporary: false
     },
   ]
-  const ast = parseScript(script)
-  expect(withoutPos(restore((ast.body[1] as VariableDeclaration).declarations[0]))).toEqual(target)
+  let index = 0
+  function* generateTempVarName () {
+    while (true) {
+      yield 'temp' + (index++)
+    }
+  }
+  const generator = generateTempVarName() as unknown as Generator<string, string, unknown>
+  expect(withoutPos(restore(declaration.declarations[0], generator))).toEqual(target)
 })

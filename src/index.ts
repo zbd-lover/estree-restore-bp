@@ -1,4 +1,6 @@
-import {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import type {
   Node,
   VariableDeclarator,
   Identifier,
@@ -36,15 +38,15 @@ function genIsUndefTest (left: Expression): BinaryExpression {
   }
 }
 
-export interface Definition {
-  id: Identifier | MemberExpression,
+export interface Definition<T extends Identifier | MemberExpression = any> {
+  id: T,
   value: Expression
 }
 
-export interface ResultItem {
+export interface RestoredItem<T extends Identifier | MemberExpression = any> {
   temporary: boolean,
   useOmitAPI: boolean,
-  definition: Definition,
+  definition: Definition<T>
 }
 
 interface PatternUse {
@@ -52,7 +54,12 @@ interface PatternUse {
   right: Expression
 }
 
-function restoreBindingPattern<T extends VariableDeclarator | AssignmentExpression> (node: T): ResultItem[] {
+type TempVarNameGenerator<T = unknown> = Generator<string, string, T>
+
+/** 解构复原 */
+function restoreBindingPattern<T extends VariableDeclarator | AssignmentExpression> (
+  node: T, tempVarNamegenerator?: TempVarNameGenerator
+): RestoredItem<T extends VariableDeclarator ? Identifier : MemberExpression>[] {
   if (
     (node.type === 'VariableDeclarator' && !node.init) ||
     (node.type === 'AssignmentExpression' && (!node.right || node.operator !== '='))
@@ -63,7 +70,6 @@ function restoreBindingPattern<T extends VariableDeclarator | AssignmentExpressi
   type NameMaker = ReturnType<typeof createNameMaker>
 
   let makeName: NameMaker
-
   if (node.type === 'VariableDeclarator') {
     const mockDeclaration: VariableDeclaration = {
       type: 'VariableDeclaration',
@@ -74,7 +80,7 @@ function restoreBindingPattern<T extends VariableDeclarator | AssignmentExpressi
       type: 'Program',
       body: [mockDeclaration],
       sourceType: 'script'
-    })
+    }, tempVarNamegenerator ? () => tempVarNamegenerator.next().value : undefined)
   } else {
     makeName = createNameMaker({
       type: 'Program',
@@ -85,10 +91,10 @@ function restoreBindingPattern<T extends VariableDeclarator | AssignmentExpressi
         }
       ],
       sourceType: 'script'
-    })
+    }, tempVarNamegenerator ? () => tempVarNamegenerator.next().value : undefined)
   }
 
-  const res: ResultItem[] = []
+  const res: RestoredItem[] = []
 
   let temporaryDefId: Identifier
   function addTemporaryDef (exp: Expression, useOmitAPI: boolean) {

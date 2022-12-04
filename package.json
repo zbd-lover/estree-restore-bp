@@ -1,6 +1,6 @@
 {
   "name": "estree-restore-bp",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Restore deconstruction syntax that bases on estree",
   "main": "lib/estree-restore-bp.js",
   "unpkg": "dist/estree-restore-bp.js",

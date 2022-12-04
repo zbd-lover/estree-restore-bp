@@ -186,18 +186,22 @@ expect(restore(declarator)).toEqual(target)
 ```
 # Types
 ```typescript
-interface Definition {
-  id: Identifier | MemberExpression,
-  value: Expression
+import type { VariableDeclarator, Identifier, MemberExpression, Expression, AssignmentExpression } from 'estree';
+export interface Definition<T extends Identifier | MemberExpression = any> {
+    id: T;
+    value: Expression;
 }
-
-interface ResultItem {
-  temporary: boolean,
-  useOmitAPI: boolean,
-  definition: Definition,
+export interface RestoredItem<T extends Identifier | MemberExpression = any> {
+    temporary: boolean;
+    useOmitAPI: boolean;
+    definition: Definition<T>;
 }
-
-function restore<T extends VariableDeclarator | AssignmentExpression>(node: T): ResultItem[];
+declare type TempVarNameGenerator<T = unknown> = Generator<string, string, T>;
+/** 解构复原 */
+declare function restoreBindingPattern<T extends VariableDeclarator | AssignmentExpression>(
+  node: T, tempVarNamegenerator?: TempVarNameGenerator
+): RestoredItem<T extends VariableDeclarator ? Identifier : MemberExpression>[];
+export { restoreBindingPattern as restore };
 ```
 # Note
 All temp var names will be unique.
