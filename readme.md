@@ -1,15 +1,15 @@
-# Profile
-Restore deconstruction syntax that bases on estree.
+# 简介
+基于estree，复原解构语法
 # Api
 ## restore
-### use
+### 引入
 ``` javascript
 // in esmodule
 import { restore } from 'estree-restore-bp'
 // in global
 const { restore } = window.EstBpRestorer
 ```
-### example
+### 案例
 ``` javascript
 import { parse } from 'acorn'
 const script = `
@@ -21,170 +21,22 @@ const {
 } = user || {}
 `
 /**
- * Abstract representation of
- *  temp = user || {},
- *  key1 = temp.key1,
- *  $temp = temp.key2,
- *  key2 = $temp === void 0 ? 10 : $temp,
- *  rest = omit(temp, ['key1', 'key2'])
+ * 复原解构后的直观表示：
+ *  temp0 = user || {},
+ *  key1 = temp0.key1,
+ *  temp1 = temp0.key2,
+ *  key2 = temp1 === void 0 ? 10 : temp1,
+ *  rest = omit(temp0, ['key1', 'key2'])
  */
-const target = [
-  {
-    temporary: true,
-    useOmitAPI: false,
-    definition: {
-      id: {
-        type: 'Identifier',
-        name: 'temp'
-      },
-      value: {
-        type: 'LogicalExpression',
-        operator: '||',
-        left: {
-          type: 'Identifier',
-          name: 'user'
-        },
-        right: {
-          type: 'ObjectExpression',
-          properties: []
-        }
-      }
-    }
-  },
-  {
-    temporary: false,
-    useOmitAPI: false,
-    definition: {
-      id: {
-        type: 'Identifier',
-        name: 'key1'
-      },
-      value: {
-        type: 'MemberExpression',
-        optional: false,
-        computed: false,
-        object: {
-          type: 'Identifier',
-          name: 'temp'
-        },
-        property: {
-          type: 'Identifier',
-          name: 'key1'
-        }
-      }
-    }
-  },
-  {
-    temporary: true,
-    useOmitAPI: false,
-    definition: {
-      id: {
-        type: 'Identifier',
-        name: '$temp'
-      },
-      value: {
-        type: 'MemberExpression',
-        optional: false,
-        computed: false,
-        object: {
-          type: 'Identifier',
-          name: 'temp'
-        },
-        property: {
-          type: 'Identifier',
-          name: 'key2'
-        }
-      }
-    }
-  },
-  {
-    temporary: false,
-    useOmitAPI: false,
-    definition: {
-      id: {
-        type: 'Identifier',
-        name: 'key2'
-      },
-      value: {
-        type: 'ConditionalExpression',
-        test: {
-          type: 'BinaryExpression',
-          operator: '===',
-          left: {
-            type: 'Identifier',
-            name: '$temp'
-          },
-          right: {
-            type: 'UnaryExpression',
-            operator: 'void',
-            argument: {
-              type: 'Literal',
-              value: 0,
-              raw: '0'
-            },
-            prefix: true
-          }
-        },
-        consequent: {
-          type: 'Literal',
-          value: 10,
-          raw: '10'
-        },
-        alternate: {
-          type: 'Identifier',
-          name: '$temp'
-        }
-      }
-    }
-  },
-  {
-    temporary: false,
-    useOmitAPI: true,
-    definition: {
-      id: {
-        type: 'Identifier',
-        name: 'rest'
-      },
-      value: {
-        type: 'CallExpression',
-        optional: false,
-        callee: {
-          type: 'Identifier',
-          name: 'omit'
-        },
-        arguments: [
-          {
-            type: 'Identifier',
-            name: 'temp'
-          },
-          {
-            type: 'ArrayExpression',
-            elements: [
-              {
-                type: 'Literal',
-                value: 'key1',
-                raw: `'key1'`
-              },
-              {
-                type: 'Literal',
-                value: 'key2',
-                raw: `'key2'`
-              }
-            ]
-          },
-        ]
-      }
-    }
-  },
-]
+const restoredItems = []
 const ast = parse(script, {
   ecmaVersion: 'latest',
   sourceType: 'script'
 })
 const declarator = ast.body[1].declarations[0]
-expect(restore(declarator)).toEqual(target)
+expect(restore(declarator)).toEqual(restoredItems) // true
 ```
-# Types
+# 类型
 ```typescript
 import type { VariableDeclarator, Identifier, MemberExpression, Expression, AssignmentExpression } from 'estree';
 export interface Definition<T extends Identifier | MemberExpression = any> {
@@ -196,12 +48,10 @@ export interface RestoredItem<T extends Identifier | MemberExpression = any> {
     useOmitAPI: boolean;
     definition: Definition<T>;
 }
-declare type TempVarNameGenerator<T = unknown> = Generator<string, string, T>;
-/** 解构复原 */
 declare function restoreBindingPattern<T extends VariableDeclarator | AssignmentExpression>(
-  node: T, tempVarNamegenerator?: TempVarNameGenerator
+  node: T
 ): RestoredItem<T extends VariableDeclarator ? Identifier : MemberExpression>[];
 export { restoreBindingPattern as restore };
 ```
-# Note
-All temp var names will be unique.
+# 其它
+所有辅助变量的名称都是唯一且安全的

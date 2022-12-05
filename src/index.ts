@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type {
-  Node,
   VariableDeclarator,
   Identifier,
   MemberExpression,
@@ -14,11 +13,7 @@ import type {
   BinaryExpression,
   VariableDeclaration
 } from 'estree'
-import { createNameMaker } from 'estree-idname-maker'
-
-function isBindingPattern (node: Node) {
-  return node.type === 'ArrayPattern' || node.type === 'ObjectPattern'
-}
+import UniqueIdGenerator from 'estree-unique-id'
 
 function genIsUndefTest (left: Expression): BinaryExpression {
   return {
@@ -54,11 +49,9 @@ interface PatternUse {
   right: Expression
 }
 
-type TempVarNameGenerator<T = unknown> = Generator<string, string, T>
-
-/** 解构复原 */
 function restoreBindingPattern<T extends VariableDeclarator | AssignmentExpression> (
-  node: T, tempVarNamegenerator?: TempVarNameGenerator
+  node: T,
+  omitApiId?: Identifier
 ): RestoredItem<T extends VariableDeclarator ? Identifier : MemberExpression>[] {
   if (
     (node.type === 'VariableDeclarator' && !node.init) ||
@@ -67,22 +60,34 @@ function restoreBindingPattern<T extends VariableDeclarator | AssignmentExpressi
     return []
   }
 
-  type NameMaker = ReturnType<typeof createNameMaker>
+  omitApiId ??= {
+    type: 'Identifier',
+    name: 'omit'
+  }
 
-  let makeName: NameMaker
+  const tempVarGenerator = (() => {
+    let index = 0
+    return (function* () {
+      while (true) {
+        yield 'temp' + index++
+      }
+    })()
+  })() as Generator<string, string, unknown>
+  let generator: UniqueIdGenerator
+
   if (node.type === 'VariableDeclarator') {
     const mockDeclaration: VariableDeclaration = {
       type: 'VariableDeclaration',
       declarations: [node],
       kind: 'const'
     }
-    makeName = createNameMaker({
+    generator = new UniqueIdGenerator({
       type: 'Program',
       body: [mockDeclaration],
       sourceType: 'script'
-    }, tempVarNamegenerator ? () => tempVarNamegenerator.next().value : undefined)
+    }, () => tempVarGenerator.next().value)
   } else {
-    makeName = createNameMaker({
+    generator = new UniqueIdGenerator({
       type: 'Program',
       body: [
         {
@@ -91,7 +96,7 @@ function restoreBindingPattern<T extends VariableDeclarator | AssignmentExpressi
         }
       ],
       sourceType: 'script'
-    }, tempVarNamegenerator ? () => tempVarNamegenerator.next().value : undefined)
+    }, () => tempVarGenerator.next().value)
   }
 
   const res: RestoredItem[] = []
@@ -100,7 +105,7 @@ function restoreBindingPattern<T extends VariableDeclarator | AssignmentExpressi
   function addTemporaryDef (exp: Expression, useOmitAPI: boolean) {
     temporaryDefId = {
       type: 'Identifier',
-      name: makeName('temp')
+      name: generator.generate(() => tempVarGenerator.next().value)
     }
     res.push({
       temporary: true,
@@ -215,10 +220,7 @@ function restoreBindingPattern<T extends VariableDeclarator | AssignmentExpressi
         } else {
           const omitCall: CallExpression = {
             type: 'CallExpression',
-            callee: {
-              type: 'Identifier',
-              name: 'omit'
-            },
+            callee: omitApiId!,
             optional: false,
             arguments: [
               pu.right,
@@ -241,11 +243,10 @@ function restoreBindingPattern<T extends VariableDeclarator | AssignmentExpressi
   }
 
   function separate (source: Expression, pattern: Pattern, defaultValue?: Expression) {
-    const isBp = isBindingPattern(pattern)
-
+    const isBp = pattern.type === 'ArrayPattern' || pattern.type === 'ObjectPattern'
     const useOmitAPI = source.type === 'CallExpression' &&
       source.callee.type === 'Identifier' &&
-      source.callee.name === 'omit'
+      source.callee.name === omitApiId!.name
 
     if (isBp && defaultValue) {
       const temp0 = addTemporaryDef(source, useOmitAPI)
@@ -312,5 +313,6 @@ function restoreBindingPattern<T extends VariableDeclarator | AssignmentExpressi
 }
 
 export {
+  /** 复原解构声明 */
   restoreBindingPattern as restore
 }

@@ -1,9 +1,8 @@
-import { AssignmentExpression, ExpressionStatement, VariableDeclaration } from 'estree'
-import { restore, RestoredItem } from '../src'
-
+import type { AssignmentExpression, ExpressionStatement, VariableDeclaration, Identifier } from 'estree'
+import { restore, type RestoredItem } from '../src'
 import { withoutPos, parseScript, genIsUndefTest } from './helpers'
 
-test('object pattern 1', () => {
+test('应正确复原对象解构', () => {
   const script = `
     const user = {}
     const {
@@ -28,7 +27,7 @@ test('object pattern 1', () => {
       definition: {
         id: {
           type: 'Identifier',
-          name: 'temp'
+          name: 'temp0'
         },
         value: {
           type: 'Identifier',
@@ -50,7 +49,7 @@ test('object pattern 1', () => {
           computed: false,
           object: {
             type: 'Identifier',
-            name: 'temp'
+            name: 'temp0'
           },
           property: {
             type: 'Identifier',
@@ -65,7 +64,7 @@ test('object pattern 1', () => {
       definition: {
         id: {
           type: 'Identifier',
-          name: '$temp'
+          name: 'temp1'
         },
         value: {
           type: 'MemberExpression',
@@ -73,7 +72,7 @@ test('object pattern 1', () => {
           computed: false,
           object: {
             type: 'Identifier',
-            name: 'temp'
+            name: 'temp0'
           },
           property: {
             type: 'Identifier',
@@ -94,7 +93,7 @@ test('object pattern 1', () => {
           type: 'ConditionalExpression',
           test: genIsUndefTest({
             type: 'Identifier',
-            name: '$temp'
+            name: 'temp1'
           }),
           consequent: {
             type: 'Literal',
@@ -103,7 +102,7 @@ test('object pattern 1', () => {
           },
           alternate: {
             type: 'Identifier',
-            name: '$temp'
+            name: 'temp1'
           }
         }
       }
@@ -122,7 +121,7 @@ test('object pattern 1', () => {
           computed: false,
           object: {
             type: 'Identifier',
-            name: 'temp'
+            name: 'temp0'
           },
           property: {
             type: 'Identifier',
@@ -137,7 +136,7 @@ test('object pattern 1', () => {
       definition: {
         id: {
           type: 'Identifier',
-          name: '$$temp'
+          name: 'temp2'
         },
         value: {
           type: 'MemberExpression',
@@ -145,7 +144,7 @@ test('object pattern 1', () => {
           computed: false,
           object: {
             type: 'Identifier',
-            name: 'temp'
+            name: 'temp0'
           },
           property: {
             type: 'Identifier',
@@ -168,7 +167,7 @@ test('object pattern 1', () => {
           computed: false,
           object: {
             type: 'Identifier',
-            name: '$$temp'
+            name: 'temp2'
           },
           property: {
             type: 'Identifier',
@@ -183,7 +182,7 @@ test('object pattern 1', () => {
       definition: {
         id: {
           type: 'Identifier',
-          name: '$$$temp'
+          name: 'temp3'
         },
         value: {
           type: 'MemberExpression',
@@ -191,7 +190,7 @@ test('object pattern 1', () => {
           computed: false,
           object: {
             type: 'Identifier',
-            name: '$$temp'
+            name: 'temp2'
           },
           property: {
             type: 'Identifier',
@@ -212,7 +211,7 @@ test('object pattern 1', () => {
           type: 'ConditionalExpression',
           test: genIsUndefTest({
             type: 'Identifier',
-            name: '$$$temp'
+            name: 'temp3'
           }),
           consequent: {
             type: 'Literal',
@@ -221,7 +220,7 @@ test('object pattern 1', () => {
           },
           alternate: {
             type: 'Identifier',
-            name: '$$$temp'
+            name: 'temp3'
           }
         }
       },
@@ -240,7 +239,7 @@ test('object pattern 1', () => {
           computed: false,
           object: {
             type: 'Identifier',
-            name: '$$temp'
+            name: 'temp2'
           },
           property: {
             type: 'Identifier',
@@ -267,7 +266,7 @@ test('object pattern 1', () => {
           arguments: [
             {
               type: 'Identifier',
-              name: '$$temp',
+              name: 'temp2',
             },
             {
               type: 'ArrayExpression',
@@ -311,7 +310,7 @@ test('object pattern 1', () => {
           arguments: [
             {
               type: 'Identifier',
-              name: 'temp',
+              name: 'temp0',
             },
             {
               type: 'ArrayExpression',
@@ -346,12 +345,12 @@ test('object pattern 1', () => {
   expect(withoutPos(restore(declarataor))).toEqual(target)
 })
 
-test('object pattern 2', () => {
+test('应正确处理缓存变量命名重复的问题', () => {
   const script = `
     const user = {}
     const {
       key1: {
-        temp,
+        temp0,
       } = {}
     } = user || {}
   `
@@ -364,7 +363,7 @@ test('object pattern 2', () => {
       definition: {
         id: {
           type: 'Identifier',
-          name: '$temp'
+          name: 'temp1'
         },
         value: {
           type: 'LogicalExpression',
@@ -386,7 +385,7 @@ test('object pattern 2', () => {
       definition: {
         id: {
           type: 'Identifier',
-          name: '$$temp'
+          name: 'temp2'
         },
         value: {
           type: 'MemberExpression',
@@ -394,7 +393,7 @@ test('object pattern 2', () => {
           computed: false,
           object: {
             type: 'Identifier',
-            name: '$temp',
+            name: 'temp1',
           },
           property: {
             type: 'Identifier',
@@ -409,13 +408,13 @@ test('object pattern 2', () => {
       definition: {
         id: {
           type: 'Identifier',
-          name: '$$$temp'
+          name: 'temp3'
         },
         value: {
           type: 'ConditionalExpression',
           test: genIsUndefTest({
             type: 'Identifier',
-            name: '$$temp'
+            name: 'temp2'
           }),
           consequent: {
             type: 'ObjectExpression',
@@ -423,7 +422,7 @@ test('object pattern 2', () => {
           },
           alternate: {
             type: 'Identifier',
-            name: '$$temp'
+            name: 'temp2'
           }
         }
       }
@@ -434,7 +433,7 @@ test('object pattern 2', () => {
       definition: {
         id: {
           type: 'Identifier',
-          name: 'temp'
+          name: 'temp0'
         },
         value: {
           type: 'MemberExpression',
@@ -442,11 +441,11 @@ test('object pattern 2', () => {
           computed: false,
           object: {
             type: 'Identifier',
-            name: '$$$temp'
+            name: 'temp3'
           },
           property: {
             type: 'Identifier',
-            name: 'temp'
+            name: 'temp0'
           }
         }
       }
@@ -455,7 +454,7 @@ test('object pattern 2', () => {
   expect(withoutPos(restore(declarataor))).toEqual(target)
 })
 
-test('array pattern 1', () => {
+test('应正确复原数组解构', () => {
   const script = `
     const user = []
     const [
@@ -478,7 +477,7 @@ test('array pattern 1', () => {
       definition: {
         id: {
           type: 'Identifier',
-          name: 'temp'
+          name: 'temp0'
         },
         value: {
           type: 'Identifier',
@@ -500,7 +499,7 @@ test('array pattern 1', () => {
           computed: true,
           object: {
             type: 'Identifier',
-            name: 'temp'
+            name: 'temp0'
           },
           property: {
             type: 'Literal',
@@ -516,7 +515,7 @@ test('array pattern 1', () => {
       definition: {
         id: {
           type: 'Identifier',
-          name: '$temp'
+          name: 'temp1'
         },
         value: {
           type: 'MemberExpression',
@@ -524,7 +523,7 @@ test('array pattern 1', () => {
           computed: true,
           object: {
             type: 'Identifier',
-            name: 'temp'
+            name: 'temp0'
           },
           property: {
             type: 'Literal',
@@ -546,7 +545,7 @@ test('array pattern 1', () => {
           type: 'ConditionalExpression',
           test: genIsUndefTest({
             type: 'Identifier',
-            name: '$temp'
+            name: 'temp1'
           }),
           consequent: {
             type: 'Literal',
@@ -555,7 +554,7 @@ test('array pattern 1', () => {
           },
           alternate: {
             type: 'Identifier',
-            name: '$temp'
+            name: 'temp1'
           }
         }
       }
@@ -566,7 +565,7 @@ test('array pattern 1', () => {
       definition: {
         id: {
           type: 'Identifier',
-          name: '$$temp'
+          name: 'temp2'
         },
         value: {
           type: 'MemberExpression',
@@ -574,7 +573,7 @@ test('array pattern 1', () => {
           computed: true,
           object: {
             type: 'Identifier',
-            name: 'temp'
+            name: 'temp0'
           },
           property: {
             type: 'Literal',
@@ -598,7 +597,7 @@ test('array pattern 1', () => {
           computed: true,
           object: {
             type: 'Identifier',
-            name: '$$temp'
+            name: 'temp2'
           },
           property: {
             type: 'Literal',
@@ -614,7 +613,7 @@ test('array pattern 1', () => {
       definition: {
         id: {
           type: 'Identifier',
-          name: '$$$temp'
+          name: 'temp3'
         },
         value: {
           type: 'MemberExpression',
@@ -622,7 +621,7 @@ test('array pattern 1', () => {
           computed: true,
           object: {
             type: 'Identifier',
-            name: '$$temp'
+            name: 'temp2'
           },
           property: {
             type: 'Literal',
@@ -644,7 +643,7 @@ test('array pattern 1', () => {
           type: 'ConditionalExpression',
           test: genIsUndefTest({
             type: 'Identifier',
-            name: '$$$temp'
+            name: 'temp3'
           }),
           consequent: {
             type: 'Literal',
@@ -653,7 +652,7 @@ test('array pattern 1', () => {
           },
           alternate: {
             type: 'Identifier',
-            name: '$$$temp'
+            name: 'temp3'
           }
         }
       }
@@ -675,7 +674,7 @@ test('array pattern 1', () => {
             computed: false,
             object: {
               type: 'Identifier',
-              name: '$$temp'
+              name: 'temp2'
             },
             property: {
               type: 'Identifier',
@@ -709,7 +708,7 @@ test('array pattern 1', () => {
             computed: false,
             object: {
               type: 'Identifier',
-              name: 'temp'
+              name: 'temp0'
             },
             property: {
               type: 'Identifier',
@@ -730,169 +729,7 @@ test('array pattern 1', () => {
   expect(withoutPos(restore(declarataor))).toEqual(target)
 })
 
-test('array pattern 2', () => {
-  const script = `
-    const user = []
-    const [
-      [
-        temp
-      ] = [],
-      ...[key1]
-    ] = user
-  `
-  const ast = parseScript(script)
-  const declarataor = (ast.body[1] as VariableDeclaration).declarations[0]
-  const target: RestoredItem[] = [
-    {
-      temporary: true,
-      useOmitAPI: false,
-      definition: {
-        id: {
-          type: 'Identifier',
-          name: '$temp'
-        },
-        value: {
-          type: 'Identifier',
-          name: 'user'
-        }
-      }
-    },
-    {
-      temporary: true,
-      useOmitAPI: false,
-      definition: {
-        id: {
-          type: 'Identifier',
-          name: '$$temp'
-        },
-        value: {
-          type: 'MemberExpression',
-          optional: false,
-          computed: true,
-          object: {
-            type: 'Identifier',
-            name: '$temp'
-          },
-          property: {
-            type: 'Literal',
-            value: 0,
-            raw: '0'
-          }
-        },
-      }
-    },
-    {
-      temporary: true,
-      useOmitAPI: false,
-      definition: {
-        id: {
-          type: 'Identifier',
-          name: '$$$temp'
-        },
-        value: {
-          type: 'ConditionalExpression',
-          test: genIsUndefTest({
-            type: 'Identifier',
-            name: '$$temp'
-          }),
-          consequent: {
-            type: 'ArrayExpression',
-            elements: []
-          },
-          alternate: {
-            type: 'Identifier',
-            name: '$$temp'
-          }
-        }
-      }
-    },
-    {
-      temporary: false,
-      useOmitAPI: false,
-      definition: {
-        id: {
-          type: 'Identifier',
-          name: 'temp'
-        },
-        value: {
-          type: 'MemberExpression',
-          optional: false,
-          computed: true,
-          object: {
-            type: 'Identifier',
-            name: '$$$temp'
-          },
-          property: {
-            type: 'Literal',
-            value: 0,
-            raw: '0'
-          }
-        }
-      }
-    },
-    {
-      temporary: true,
-      useOmitAPI: false,
-      definition: {
-        id: {
-          type: 'Identifier',
-          name: '$$$$temp',
-        },
-        value: {
-          type: 'CallExpression',
-          optional: false,
-          callee: {
-            type: 'MemberExpression',
-            computed: false,
-            optional: false,
-            object: {
-              type: 'Identifier',
-              name: '$temp'
-            },
-            property: {
-              type: 'Identifier',
-              name: 'slice'
-            }
-          },
-          arguments: [
-            {
-              type: 'Literal',
-              value: 1,
-              raw: '1'
-            }
-          ]
-        }
-      }
-    },
-    {
-      temporary: false,
-      useOmitAPI: false,
-      definition: {
-        id: {
-          type: 'Identifier',
-          name: 'key1'
-        },
-        value: {
-          type: 'MemberExpression',
-          optional: false,
-          computed: true,
-          object: {
-            type: 'Identifier',
-            name: '$$$$temp'
-          },
-          property: {
-            type: 'Literal',
-            value: 0,
-            raw: '0'
-          }
-        }
-      }
-    }
-  ]
-  expect(withoutPos(restore(declarataor))).toEqual(target)
-})
-
-test('mixed pattern', () => {
+test('应正确复原对象、数组混合解构', () => {
   const script = `
     const user = {}
     const {
@@ -911,7 +748,7 @@ test('mixed pattern', () => {
       definition: {
         id: {
           type: 'Identifier',
-          name: 'temp'
+          name: 'temp0'
         },
         value: {
           type: 'Identifier',
@@ -933,7 +770,7 @@ test('mixed pattern', () => {
           computed: false,
           object: {
             type: 'Identifier',
-            name: 'temp'
+            name: 'temp0'
           },
           property: {
             type: 'Identifier',
@@ -948,7 +785,7 @@ test('mixed pattern', () => {
       definition: {
         id: {
           type: 'Identifier',
-          name: '$temp'
+          name: 'temp1'
         },
         value: {
           type: 'MemberExpression',
@@ -956,7 +793,7 @@ test('mixed pattern', () => {
           computed: false,
           object: {
             type: 'Identifier',
-            name: 'temp'
+            name: 'temp0'
           },
           property: {
             type: 'Identifier',
@@ -979,7 +816,7 @@ test('mixed pattern', () => {
           computed: true,
           object: {
             type: 'Identifier',
-            name: '$temp'
+            name: 'temp1'
           },
           property: {
             type: 'Literal',
@@ -993,15 +830,15 @@ test('mixed pattern', () => {
   expect(withoutPos(restore(declarataor))).toEqual(target)
 })
 
-test('assignment expression', () => {
+test('应正确复原赋值表达式', () => {
   const script = `
     const arr = [], obj = {};
-    [obj.name, obj.age = 10, key1] = arr;
+    [obj.name, obj.age = 10, temp0] = arr;
     key3 *= arr
   `
   const ast = parseScript(script)
-  const exp1 = ast.body[1] as ExpressionStatement
-  const exp2 = ast.body[2] as ExpressionStatement
+  const exp1 = (ast.body[1] as ExpressionStatement).expression as AssignmentExpression
+  const exp2 = (ast.body[2] as ExpressionStatement).expression as AssignmentExpression
 
   const target1: RestoredItem[] = [
     {
@@ -1010,7 +847,7 @@ test('assignment expression', () => {
       definition: {
         id: {
           type: 'Identifier',
-          name: 'temp'
+          name: 'temp1'
         },
         value: {
           type: 'Identifier',
@@ -1041,7 +878,7 @@ test('assignment expression', () => {
           computed: true,
           object: {
             type: 'Identifier',
-            name: 'temp'
+            name: 'temp1'
           },
           property: {
             type: 'Literal',
@@ -1057,7 +894,7 @@ test('assignment expression', () => {
       definition: {
         id: {
           type: 'Identifier',
-          name: '$temp'
+          name: 'temp2'
         },
         value: {
           type: 'MemberExpression',
@@ -1065,7 +902,7 @@ test('assignment expression', () => {
           computed: true,
           object: {
             type: 'Identifier',
-            name: 'temp'
+            name: 'temp1'
           },
           property: {
             type: 'Literal',
@@ -1096,7 +933,7 @@ test('assignment expression', () => {
           type: 'ConditionalExpression',
           test: genIsUndefTest({
             type: 'Identifier',
-            name: '$temp'
+            name: 'temp2'
           }),
           consequent: {
             type: 'Literal',
@@ -1105,7 +942,7 @@ test('assignment expression', () => {
           },
           alternate: {
             type: 'Identifier',
-            name: '$temp'
+            name: 'temp2'
           }
         }
       }
@@ -1116,7 +953,7 @@ test('assignment expression', () => {
       definition: {
         id: {
           type: 'Identifier',
-          name: 'key1'
+          name: 'temp0'
         },
         value: {
           type: 'MemberExpression',
@@ -1124,7 +961,7 @@ test('assignment expression', () => {
           computed: true,
           object: {
             type: 'Identifier',
-            name: 'temp'
+            name: 'temp1'
           },
           property: {
             type: 'Literal',
@@ -1135,16 +972,23 @@ test('assignment expression', () => {
       }
     }
   ]
-  expect(withoutPos(restore(exp1.expression as AssignmentExpression))).toEqual(target1)
-  expect(withoutPos(restore(exp2.expression as AssignmentExpression))).toEqual([])
+  expect(withoutPos(restore(exp1))).toEqual(target1)
+  expect(withoutPos(restore(exp2))).toEqual([])
 })
 
-test('custom tempVarNamegenerator', () => {
-  const script = 'const { temp } = user'
+test('应使用传入的omitApiId来处理对象解构', () => {
+  const script = 'const { a, ...rest } = user'
   const ast = parseScript(script)
   const declaration = ast.body[0] as VariableDeclaration
-  const target: RestoredItem[] = [
+  const MyOmitApi: Identifier = {
+    type: 'Identifier',
+    name: 'MyOmit'
+  }
+  const result = restore(withoutPos(declaration.declarations[0]), MyOmitApi)
+  expect(result).toEqual([
     {
+      temporary: true,
+      useOmitAPI: false,
       definition: {
         id: {
           type: 'Identifier',
@@ -1154,15 +998,15 @@ test('custom tempVarNamegenerator', () => {
           type: 'Identifier',
           name: 'user'
         }
-      },
-      useOmitAPI: false,
-      temporary: true
+      }
     },
     {
+      temporary: false,
+      useOmitAPI: false,
       definition: {
         id: {
           type: 'Identifier',
-          name: 'temp'
+          name: 'a'
         },
         value: {
           type: 'MemberExpression',
@@ -1170,24 +1014,45 @@ test('custom tempVarNamegenerator', () => {
           computed: false,
           object: {
             type: 'Identifier',
-            name: 'temp0'
+            name: 'temp0',
           },
           property: {
             type: 'Identifier',
-            name: 'temp'
+            name: 'a'
           }
         }
-      },
-      useOmitAPI: false,
-      temporary: false
+      }
     },
-  ]
-  let index = 0
-  function* generateTempVarName () {
-    while (true) {
-      yield 'temp' + (index++)
+    {
+      temporary: false,
+      useOmitAPI: true,
+      definition: {
+        id: {
+          type: 'Identifier',
+          name: 'rest'
+        },
+        value: {
+          type: 'CallExpression',
+          optional: false,
+          callee: MyOmitApi,
+          arguments: [
+            {
+              type: 'Identifier',
+              name: 'temp0'
+            },
+            {
+              type: 'ArrayExpression',
+              elements: [
+                {
+                  type: 'Literal',
+                  value: 'a',
+                  raw: '\'a\''
+                }
+              ]
+            }
+          ],
+        }
+      }
     }
-  }
-  const generator = generateTempVarName() as unknown as Generator<string, string, unknown>
-  expect(withoutPos(restore(declaration.declarations[0], generator))).toEqual(target)
+  ] as RestoredItem<Identifier>[])
 })

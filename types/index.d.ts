@@ -8,7 +8,7 @@ export interface RestoredItem<T extends Identifier | MemberExpression = any> {
     useOmitAPI: boolean;
     definition: Definition<T>;
 }
-declare type TempVarNameGenerator<T = unknown> = Generator<string, string, T>;
-/** 解构复原 */
-declare function restoreBindingPattern<T extends VariableDeclarator | AssignmentExpression>(node: T, tempVarNamegenerator?: TempVarNameGenerator): RestoredItem<T extends VariableDeclarator ? Identifier : MemberExpression>[];
-export { restoreBindingPattern as restore };
+declare function restoreBindingPattern<T extends VariableDeclarator | AssignmentExpression>(node: T, omitApiId?: Identifier): RestoredItem<T extends VariableDeclarator ? Identifier : MemberExpression>[];
+export { 
+/** 复原解构声明 */
+restoreBindingPattern as restore };
